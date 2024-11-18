@@ -1,0 +1,83 @@
+# Títulos y Descripción del Software
+st.title("Control de Costes y Escandallos")
+st.sidebar.title("Menú")
+st.sidebar.markdown("Navega entre las opciones:")
+
+# Crear pestañas en la app
+menu = st.sidebar.selectbox("Selecciona una sección:", 
+                             ["Materias Primas", "Escandallos", "Ajuste de Precios", "Análisis de Ventas"])
+
+# 1. Materias Primas
+if menu == "Materias Primas":
+    st.header("Gestión de Materias Primas")
+    
+    # Tabla de ejemplo para materias primas
+    st.markdown("Carga tu lista de materias primas o introduce los datos manualmente:")
+    data = {
+        "Producto": ["Harina", "Tomate", "Queso"],
+        "Proveedor": ["Proveedor A", "Proveedor B", "Proveedor C"],
+        "Unidad de Compra": ["kg", "kg", "kg"],
+        "Precio por Unidad (€)": [0.8, 1.5, 5.0]
+    }
+    materias_primas = pd.DataFrame(data)
+    st.dataframe(materias_primas)
+    
+    # Subida de archivo
+    st.markdown("Sube un archivo CSV para cargar tus materias primas:")
+    uploaded_file = st.file_uploader("Elige un archivo CSV", type="csv")
+    if uploaded_file:
+        materias_primas = pd.read_csv(uploaded_file)
+        st.success("Archivo cargado correctamente.")
+        st.dataframe(materias_primas)
+
+# 2. Escandallos
+elif menu == "Escandallos":
+    st.header("Gestión de Escandallos")
+    
+    st.markdown("Introduce los ingredientes y cantidades para generar un escandallo:")
+    receta = st.text_input("Nombre de la receta:")
+    num_ingredientes = st.slider("Número de ingredientes:", 1, 10, 3)
+    
+    if receta:
+        ingredientes = []
+        for i in range(num_ingredientes):
+            ingrediente = st.text_input(f"Ingrediente {i + 1}:")
+            cantidad = st.number_input(f"Cantidad de {ingrediente}:", min_value=0.0)
+            coste_unitario = st.number_input(f"Coste unitario de {ingrediente} (€):", min_value=0.0)
+            ingredientes.append({"Ingrediente": ingrediente, "Cantidad": cantidad, "Coste Unitario (€)": coste_unitario})
+        
+        if st.button("Calcular Escandallo"):
+            df = pd.DataFrame(ingredientes)
+            df["Coste Total (€)"] = df["Cantidad"] * df["Coste Unitario (€)"]
+            st.subheader("Escandallo Calculado")
+            st.dataframe(df)
+            st.write(f"**Coste Total de la Receta:** {df['Coste Total (€)'].sum()} €")
+
+# 3. Ajuste de Precios
+elif menu == "Ajuste de Precios":
+    st.header("Ajuste de Precios")
+    st.markdown("Introduce el coste total y el margen deseado para calcular el precio de venta sugerido:")
+    coste_total = st.number_input("Coste Total (€):", min_value=0.0)
+    margen_deseado = st.number_input("Margen Deseado (%)", min_value=0.0)
+    
+    if st.button("Calcular Precio de Venta"):
+        precio_venta = coste_total / (1 - (margen_deseado / 100))
+        st.success(f"Precio de Venta Sugerido: {precio_venta:.2f} €")
+
+# 4. Análisis de Ventas
+elif menu == "Análisis de Ventas":
+    st.header("Análisis de Ventas")
+    
+    st.markdown("Carga tu historial de ventas para analizar márgenes:")
+    ventas_file = st.file_uploader("Sube un archivo CSV con ventas", type="csv")
+    
+    if ventas_file:
+        ventas = pd.read_csv(ventas_file)
+        st.success("Archivo de ventas cargado correctamente.")
+        st.dataframe(ventas)
+        
+        if "Ingreso Total (€)" in ventas.columns and "Coste Total (€)" in ventas.columns:
+            ventas["Margen (€)"] = ventas["Ingreso Total (€)"] - ventas["Coste Total (€)"]
+            ventas["Margen (%)"] = (ventas["Margen (€)"] / ventas["Ingreso Total (€)"]) * 100
+            st.subheader("Análisis de Márgenes")
+            st.dataframe(ventas)
